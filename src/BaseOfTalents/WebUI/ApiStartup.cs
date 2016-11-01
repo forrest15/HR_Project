@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Configuration;
 using Autofac;
 using Mailer;
 using Microsoft.Owin;
@@ -10,7 +9,7 @@ using Owin;
 using WebUI.App_Start;
 using WebUI.Auth;
 using WebUI.Extensions;
-using WebUI.Globals;
+using WebUI.Infrastructure.Auth;
 
 [assembly: OwinStartup(typeof(WebUI.ApiStartup))]
 namespace WebUI
@@ -19,21 +18,23 @@ namespace WebUI
     {
         public void Configuration(IAppBuilder app)
         {
-            string rootFolder = SettingsContext.Instance.GetRootPath();
-            string uploadsPath = SettingsContext.Instance.GetUploadsPath();
-            string requestPath = SettingsContext.Instance.RequestPath;
+            string rootFolder = Globals.SettingsContext.Instance.GetRootPath();
+            string uploadsPath = Globals.SettingsContext.Instance.GetUploadsPath();
+            string requestPath = Globals.SettingsContext.Instance.RequestPath;
 
             string defaultPage = "/index.html";
+
+            string relativePathToEmailTemplate = "Data/email.html";
 
             AppConfiguration.ConfigureAutomapper();
             AppConfiguration.ConfigureJsonConverter();
             AppConfiguration.ConfigureDatabaseInitializer();
             AppConfiguration.ConfigureDirrectory(rootFolder);
             AppConfiguration.ConfigureDirrectory(uploadsPath);
-            AppConfiguration.ConfigureMailAgent(SettingsContext.Instance.Email,
-                SettingsContext.Instance.Password);
+            AppConfiguration.ConfigureMailAgent(Globals.SettingsContext.Instance.Email,
+                Globals.SettingsContext.Instance.Password);
 
-            TemplateLoader.SetupFile("Data/email.html");
+            TemplateLoader.SetupFile(relativePathToEmailTemplate);
 
             var config = WebApiConfig
                 .Create()
@@ -46,16 +47,18 @@ namespace WebUI
 
             var container = AutofacConfig.Initialize(config);
 
+            ConfigureOAuth(app, container);
             app.UseAutofacMiddleware(container);
             app.UseAutofacWebApi(config);
             app.UseWebApi(config);
             app.UseStaticFilesServer(uploadsPath, requestPath);
             app.UseHtml5Routing(rootFolder, defaultPage);
+        }
 
-
-            //stub
-            var issuer = ConfigurationManager.AppSettings["issuer"];
-            var secret = Microsoft.Owin.Security.DataHandler.Encoder.TextEncodings.Base64Url.Decode(ConfigurationManager.AppSettings["secret"]);
+        private static void ConfigureOAuth(IAppBuilder app, IContainer container)
+        {
+            var issuer = $"{Globals.SettingsContext.Instance.IssuerUrl}:{Globals.SettingsContext.Instance.Port}";
+            var secret = Globals.SettingsContext.Instance.Secret;
 
             app.UseJwtBearerAuthentication(new JwtBearerAuthenticationOptions
             {
@@ -66,19 +69,19 @@ namespace WebUI
                     new SymmetricKeyIssuerSecurityTokenProvider(issuer, secret)
                 }
             });
-
             using (var scope = container.BeginLifetimeScope())
             {
                 app.UseOAuthAuthorizationServer(new OAuthAuthorizationServerOptions
                 {
                     //stub till we haven't enabled ssl
                     AllowInsecureHttp = true,
-                    TokenEndpointPath = new PathString("/account/signin"),
+                    TokenEndpointPath = new PathString("/api/account/signin"),
                     AccessTokenExpireTimeSpan = TimeSpan.FromMinutes(60),
-                    Provider = scope.Resolve<OAuthAuthorizationServerProvider>(),
-                    AccessTokenFormat = new ApplicationJwt(issuer)
+                    Provider = new JwtAuthServer(scope.Resolve<IAccountService>()),
+                    AccessTokenFormat = new ApplicationJwt(issuer, secret)
                 });
             }
+
         }
     }
 }

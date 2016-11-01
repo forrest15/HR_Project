@@ -1,6 +1,6 @@
-﻿using DAL.DTO;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using DAL.DTO;
 using WebUI.Infrastructure.Auth;
 
 namespace WebUI.Services
@@ -20,7 +20,7 @@ namespace WebUI.Services
         {
             get
             {
-                return "Token";
+                return "Bearer";
             }
         }
 

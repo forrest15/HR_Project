@@ -36,16 +36,9 @@ namespace WebUI.Controllers
         // GET api/<controller>
         [HttpPost]
         [Route("search")]
-        public IHttpActionResult Get([FromBody]string paramss)
-        {
-            return Json(_service.Get(new object()), BOT_SERIALIZER_SETTINGS);
-        }
-
-        [HttpGet]
-        [Route("")]
         public IHttpActionResult Get()
         {
-            return this.Get("");
+            return Json(_service.Get(), BOT_SERIALIZER_SETTINGS);
         }
 
         // GET api/<controller>/5

@@ -19,6 +19,7 @@ namespace ApiHost
             public string DbDataSource { get; set; }
 
             public string FrAccessUrl { get; set; }
+            public string Secret { get; set; }
         }
 
         public void Load(string fileName)
@@ -32,7 +33,7 @@ namespace ApiHost
             {
                 string json = reader.ReadToEnd();
                 var settings = JsonConvert.DeserializeObject<Settings>(json);
-                SettingsContext.SetInstance(settings.Url, settings.FrAccessUrl, settings.Port, settings.Email, settings.Password);
+                SettingsContext.SetInstance(settings.Url, settings.FrAccessUrl, settings.Port, settings.Email, settings.Password, settings.Secret);
                 DbSettingsContext.SetInstance(settings.DbInitialCatalog, settings.DbDataSource);
             }
         }

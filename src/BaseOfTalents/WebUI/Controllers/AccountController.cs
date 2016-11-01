@@ -1,12 +1,10 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Net.Http;
 using System.Web.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using WebUI.Filters;
 using WebUI.Infrastructure.Auth;
 using WebUI.Models;
-using System;
-using System.Net.Http;
 
 namespace WebUI.Controllers
 {
@@ -29,58 +27,11 @@ namespace WebUI.Controllers
         }
 
         /// <summary>
-        /// Logs user into application and creates
-        /// </summary>
-        /// <param name="model">User data</param>
-        /// <returns>Credentials and user data</returns>
-        [HttpPost, AllowAnonymous]
-        [Route("signin")]
-        public async Task<IHttpActionResult> Signin([FromBody]LoginModel model)
-        {
-            try
-            {
-                var login = model.Login;
-                var password = model.Password;
-                var data = await _userAccountService
-                    .LogInAsync(login, password);
-
-                var user = data.Item1;
-                string token = data.Item2;
-
-                var result = new
-                {
-                    Token = token,
-                    FirstName = user.FirstName,
-                    MiddleName = user.MiddleName,
-                    LastName = user.LastName,
-                    RoleId = user.RoleId,
-                    Photo = user.Photo,
-                    BirthDate = user.BirthDate,
-                    CreatedOn = user.CreatedOn,
-                    Login = user.Login,
-                    Email = user.Email,
-                    Skype = user.Skype,
-                    PhoneNumbers = user.PhoneNumbers,
-                    IsMale = user.isMale,
-                    CityId = user.CityId,
-                    Id = user.Id
-                };
-
-                return Json(result, botSerializationSettings);
-            }
-            catch (System.Exception e)
-            {
-                return BadRequest(e.Message);
-            }
-
-        }
-
-        /// <summary>
         /// Logs user out of the application.
         /// Deletes session.
         /// </summary>
         /// <returns>Success or unsuccess</returns>
-        [HttpPost, Auth]
+        [HttpPost, Authorize]
         [Route("logout")]
         public IHttpActionResult Logout()
         {
@@ -102,16 +53,15 @@ namespace WebUI.Controllers
         /// </summary>
         /// <param name="identity">the parameter for identifiing user</param>
         /// <returns>Full user info</returns>
-        [HttpPost, AllowAnonymous]
+        [HttpGet, Authorize]
         [Route("")]
-        public IHttpActionResult Get([FromBody]IdentityModel identity)
+        public IHttpActionResult Get()
         {
             try
             {
-                var user = _userAccountService.GetUser(identity.Token);
+                var user = _userAccountService.GetUser(ActionContext.Request.Headers.Authorization.Parameter);
                 var result = new
                 {
-                    Token = identity.Token,
                     FirstName = user.FirstName,
                     MiddleName = user.MiddleName,
                     LastName = user.LastName,
@@ -139,11 +89,11 @@ namespace WebUI.Controllers
         /// <summary>
         /// Api for changing user password
         /// </summary>
-        [HttpPost, Auth]
+        [HttpPost, Authorize]
         [Route("password")]
         public HttpResponseMessage ChangePassword([FromBody]ChangePasswordModel model)
         {
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, ModelState);
             }
@@ -152,7 +102,7 @@ namespace WebUI.Controllers
                 _userAccountService.ChangePassword(ActionContext.Request.Headers.Authorization.Parameter, model.OldPassword, model.NewPassword);
                 return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
             }
-            catch(ArgumentException e)
+            catch (ArgumentException e)
             {
                 return Request.CreateResponse(System.Net.HttpStatusCode.Forbidden, e.Message);
             }

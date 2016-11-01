@@ -4,7 +4,6 @@ using DAL.Exceptions;
 using DAL.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using WebUI.Filters;
 using WebUI.Infrastructure.Auth;
 using WebUI.Models;
 
@@ -29,7 +28,6 @@ namespace WebUI.Controllers
         // GET api/<controller>
         [HttpGet]
         [Route("search")]
-        [Auth, PermissionAuthorization(Permissions = Domain.Entities.Enum.AccessRight.ViewListOfVacancies)]
         public IHttpActionResult Get([FromUri]VacancySearchParameters vacancyParams)
         {
             vacancyParams = vacancyParams ?? new VacancySearchParameters();
@@ -76,7 +74,6 @@ namespace WebUI.Controllers
         // POST api/<controller>
         [HttpPost]
         [Route("")]
-        [Auth, PermissionAuthorization(Permissions = Domain.Entities.Enum.AccessRight.AddVacancy)]
         public IHttpActionResult Post([FromBody]VacancyDTO vacancy)
         {
             if (!ModelState.IsValid)
@@ -90,7 +87,6 @@ namespace WebUI.Controllers
         // PUT api/<controller>/5
         [HttpPut]
         [Route("{id}")]
-        [Auth, PermissionAuthorization(Permissions = Domain.Entities.Enum.AccessRight.EditVacancy)]
         public IHttpActionResult Put(int id, [FromBody]VacancyDTO vacancy)
         {
             if (!ModelState.IsValid)
@@ -104,7 +100,6 @@ namespace WebUI.Controllers
         // DELETE api/<controller>/5
         [HttpDelete]
         [Route("{id:int}")]
-        [Auth, PermissionAuthorization(Permissions = Domain.Entities.Enum.AccessRight.RemoveVacancy)]
         public IHttpActionResult Delete(int id)
         {
             try
