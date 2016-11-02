@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using DAL.DTO;
 
-namespace WebUI.Infrastructure.Auth
+namespace WebUI.Auth.Infrastructure
 {
     /// <summary>
     /// Service of controlling user actions, such as login (signin), registration and logout
@@ -13,8 +13,6 @@ namespace WebUI.Infrastructure.Auth
         /// </summary>
         /// <returns>True if action finished successfully. Else false.</returns>
         bool LogOut(string token);
-
-        UserDTO GetUser(string token);
 
         UserDTO Authentificate(string login, string password);
         bool CkeckAuthority(string login, string password);

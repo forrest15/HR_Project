@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.OAuth;
-using WebUI.Infrastructure.Auth;
+using WebUI.Auth.Infrastructure;
 
 namespace WebUI.Auth
 {
@@ -31,8 +31,7 @@ namespace WebUI.Auth
                 var user = accountService.Authentificate(context.UserName, context.Password);
                 var identity = new ClaimsIdentity("JWT");
 
-                identity.AddClaim(new Claim("sub", context.UserName));
-                identity.AddClaim(new Claim(ClaimTypes.Email, user.Email));
+                identity.AddClaim(new Claim("sub", user.Email));
                 identity.AddClaim(new Claim("id", user.Id.ToString()));
 
 

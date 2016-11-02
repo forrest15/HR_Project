@@ -2,10 +2,10 @@
 using System.Threading.Tasks;
 using DAL.DTO;
 using DAL.Services;
+using WebUI.Auth.Infrastructure;
 using WebUI.Globals.Validators;
-using WebUI.Infrastructure.Auth;
 
-namespace WebUI.Services.Auth
+namespace WebUI.Auth.Services
 {
     /// <summary>
     /// Service for managing user and its session
@@ -14,13 +14,11 @@ namespace WebUI.Services.Auth
     {
         UserService _userService;
         RoleService _roleService;
-        IAuthContainer<string> _authContainer;
 
-        public UserAccountService(UserService userService, RoleService roleService, IAuthContainer<string> authContainer)
+        public UserAccountService(UserService userService, RoleService roleService)
         {
             _userService = userService;
             _roleService = roleService;
-            _authContainer = authContainer;
         }
 
         /// <summary>
@@ -29,20 +27,17 @@ namespace WebUI.Services.Auth
         /// <returns>True if action finished succesfully</returns>
         public bool LogOut(string token)
         {
+            throw new NotImplementedException();
             try
             {
-                _authContainer.Delete(token);
+
+                //_authContainer.Delete(token);
                 return true;
             }
             catch (Exception)
             {
                 return false;
             }
-        }
-
-        public UserDTO GetUser(string token)
-        {
-            return _authContainer.Get(token).Item1;
         }
 
         /// <summary>
@@ -53,7 +48,8 @@ namespace WebUI.Services.Auth
         /// <param name="newPassword">New password will be set to user's data if old password is match </param>
         public void ChangePassword(string token, string oldPassword, string newPassword)
         {
-            var user = _userService.Get(this.GetUser(token).Id);
+            int id = PayloadDecoder.TryGetId(token);
+            var user = _userService.Get(id);
             var validator = new PasswordValidator();
             var result = validator.Validate(oldPassword, user.Password);
             if (!result.IsValid)

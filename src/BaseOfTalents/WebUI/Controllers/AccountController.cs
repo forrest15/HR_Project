@@ -1,10 +1,16 @@
 ﻿using System;
-using System.Net.Http;
 using System.Web.Http;
+using DAL.DTO;
+using DAL.Services;
+using Domain.Entities;
+using Mailer;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using WebUI.Infrastructure.Auth;
+using WebUI.Auth.Infrastructure;
+using WebUI.Extensions;
 using WebUI.Models;
+using WebUI.Results;
+using WebUI.Services;
 
 namespace WebUI.Controllers
 {
@@ -15,15 +21,21 @@ namespace WebUI.Controllers
     public class AccountController : ApiController
     {
         private IAccountService _userAccountService;
+        private BaseService<MailContent, MailDTO> _mailService;
+        private TemplateService _templateService;
+
         private static JsonSerializerSettings botSerializationSettings = new JsonSerializerSettings()
         {
             ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
 
-        public AccountController(IAccountService userAccountService)
+        public AccountController(IAccountService userAccountService, BaseService<MailContent, MailDTO> mailService,
+            TemplateService templateService)
         {
-            _userAccountService = userAccountService;
+            _userAccountService = userAuthService;
+            _mailService = mailService;
+            _templateService = templateService;
         }
 
         /// <summary>
@@ -39,51 +51,37 @@ namespace WebUI.Controllers
             {
                 bool logedOut = _userAccountService
                     .LogOut(ActionContext.Request.Headers.Authorization.Parameter);
-                return Json(logedOut, botSerializationSettings);
+                return logedOut ? Unauthorized() : BadRequest() as IHttpActionResult;
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 return BadRequest(e.Message);
             }
 
         }
 
-        /// <summary>
-        /// Api for getting corect user with session
-        /// </summary>
-        /// <param name="identity">the parameter for identifiing user</param>
-        /// <returns>Full user info</returns>
-        [HttpGet, Authorize]
-        [Route("")]
-        public IHttpActionResult Get()
+        // POST api/<controller>
+        [HttpPost, Authorize]
+        [Route("invite")]
+        public IHttpActionResult Register([FromBody]RegistrationModel newUser)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var user = _userAccountService.GetUser(ActionContext.Request.Headers.Authorization.Parameter);
-                var result = new
-                {
-                    FirstName = user.FirstName,
-                    MiddleName = user.MiddleName,
-                    LastName = user.LastName,
-                    RoleId = user.RoleId,
-                    Photo = user.Photo,
-                    BirthDate = user.BirthDate,
-                    CreatedOn = user.CreatedOn,
-                    Login = user.Login,
-                    Email = user.Email,
-                    Skype = user.Skype,
-                    PhoneNumbers = user.PhoneNumbers,
-                    IsMale = user.isMale,
-                    CityId = user.CityId,
-                    Id = user.Id
-                };
+                return BadRequest(ModelState);
+            }
 
-                return Json(result, botSerializationSettings);
-            }
-            catch (System.Exception e)
-            {
-                return BadRequest(e.Message);
-            }
+            var mailContent = _mailService.Get(newUser.MailId);
+            var template = _templateService.GetTemplate();
+
+            newUser.GeneratePassword();
+            var addedUser = _service.Add(newUser);
+
+            var textAfterReplacing = MailBodyContentReplacer.Replace(mailContent.Body, addedUser.Login, addedUser.Password);
+            var mail = MailTemplateGenerator.Generate(template, mailContent.Invitation, textAfterReplacing, mailContent.Farewell, mailContent.Subject,
+                Globals.SettingsContext.Instance.GetImageUrl(), Globals.SettingsContext.Instance.GetOuterUrl());
+
+            MailAgent.Send(addedUser.Email, mail.Subject, mail.Template);
+            return Json(addedUser, botSerializationSettings);
         }
 
         /// <summary>
@@ -91,20 +89,20 @@ namespace WebUI.Controllers
         /// </summary>
         [HttpPost, Authorize]
         [Route("password")]
-        public HttpResponseMessage ChangePassword([FromBody]ChangePasswordModel model)
+        public IHttpActionResult ChangePassword([FromBody]ChangePasswordModel model)
         {
             if (!ModelState.IsValid)
             {
-                return Request.CreateResponse(System.Net.HttpStatusCode.BadRequest, ModelState);
+                return BadRequest(ModelState);
             }
             try
             {
                 _userAccountService.ChangePassword(ActionContext.Request.Headers.Authorization.Parameter, model.OldPassword, model.NewPassword);
-                return new HttpResponseMessage(System.Net.HttpStatusCode.OK);
+                return Ok();
             }
             catch (ArgumentException e)
             {
-                return Request.CreateResponse(System.Net.HttpStatusCode.Forbidden, e.Message);
+                return new ForbiddenResult(e.Message);
             }
         }
 

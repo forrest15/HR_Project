@@ -205,8 +205,8 @@
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Auth\ApplicationJwt.cs" />
     <Compile Include="Auth\Infrastructure\IAccountService.cs" />
-    <Compile Include="Auth\Infrastructure\IAuthContainer.cs" />
     <Compile Include="Auth\JwtAuthServer.cs" />
+    <Compile Include="Auth\PayloadDecoder.cs" />
     <Compile Include="Controllers\AccessRightController.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\BaseController.cs" />
@@ -269,11 +269,9 @@
     <Compile Include="Models\VacancySearchParameters.cs" />
     <Compile Include="Models\VacancyStageModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Results\AddChallengeOnUnauthorizedResult.cs" />
-    <Compile Include="Results\AuthFailedResult.cs" />
     <Compile Include="Results\ChangePasswordResult.cs" />
-    <Compile Include="Auth\Services\TokenContainer.cs" />
     <Compile Include="Auth\Services\UserAccountService.cs" />
+    <Compile Include="Results\ForbiddenResult.cs" />
     <Compile Include="Services\NLogExceptionLogger.cs" />
     <Compile Include="Services\PasswordGenerator.cs" />
     <Compile Include="Services\TemplateService.cs" />

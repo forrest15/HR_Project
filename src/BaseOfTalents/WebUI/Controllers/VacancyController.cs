@@ -4,7 +4,7 @@ using DAL.Exceptions;
 using DAL.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using WebUI.Infrastructure.Auth;
+using WebUI.Auth;
 using WebUI.Models;
 
 namespace WebUI.Controllers
@@ -12,17 +12,15 @@ namespace WebUI.Controllers
     [RoutePrefix("api/vacancy")]
     public class VacancyController : ApiController
     {
-        private IAuthContainer<string> authContainer;
         private VacancyService service;
         private static JsonSerializerSettings BOT_SERIALIZER_SETTINGS = new JsonSerializerSettings()
         {
             ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
-        public VacancyController(VacancyService service, IAuthContainer<string> authContainer)
+        public VacancyController(VacancyService service)
         {
             this.service = service;
-            this.authContainer = authContainer;
         }
 
         // GET api/<controller>
@@ -80,7 +78,8 @@ namespace WebUI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var updatedVacancy = service.Add(vacancy, authContainer.Get(this.ActionContext.Request.Headers.Authorization.Parameter).Item1.Id);
+            int userId = PayloadDecoder.TryGetId(ActionContext.Request.Headers.Authorization.Parameter);
+            var updatedVacancy = service.Add(vacancy, userId);
             return Json(updatedVacancy, BOT_SERIALIZER_SETTINGS);
         }
 
@@ -93,7 +92,8 @@ namespace WebUI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var updatedVacancy = service.Update(vacancy, authContainer.Get(this.ActionContext.Request.Headers.Authorization.Parameter).Item1.Id);
+            int userId = PayloadDecoder.TryGetId(ActionContext.Request.Headers.Authorization.Parameter);
+            var updatedVacancy = service.Update(vacancy, userId);
             return Json(updatedVacancy, BOT_SERIALIZER_SETTINGS);
         }
 

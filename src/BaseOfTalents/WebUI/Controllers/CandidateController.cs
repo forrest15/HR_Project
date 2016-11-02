@@ -1,10 +1,11 @@
-﻿using System.Web.Http;
+﻿using System;
+using System.Web.Http;
 using DAL.DTO;
 using DAL.Exceptions;
 using DAL.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
-using WebUI.Infrastructure.Auth;
+using WebUI.Auth;
 using WebUI.Models;
 
 namespace WebUI.Controllers
@@ -13,26 +14,24 @@ namespace WebUI.Controllers
     public class CandidateController : ApiController
     {
         private CandidateService service;
-        private IAuthContainer<string> authContainer;
         private static JsonSerializerSettings BOT_SERIALIZER_SETTINGS = new JsonSerializerSettings()
         {
             ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore,
             ContractResolver = new CamelCasePropertyNamesContractResolver()
         };
-        public CandidateController(CandidateService service, IAuthContainer<string> authContainer)
+        public CandidateController(CandidateService service)
         {
             this.service = service;
-            this.authContainer = authContainer;
         }
 
-        [HttpGet]
+        [HttpGet, Authorize]
         public IHttpActionResult Get()
         {
             return this.Get(new CandidateSearchModel());
         }
 
         // GET api/<controller>
-        [HttpPost]
+        [HttpPost, Authorize]
         [Route("search")]
         public IHttpActionResult Get([FromBody]CandidateSearchModel searchParameters)
         {
@@ -79,7 +78,7 @@ namespace WebUI.Controllers
         }
 
         // GET api/<controller>/5
-        [HttpGet]
+        [HttpGet, Authorize]
         [Route("{id:int}")]
         public IHttpActionResult Get(int id)
         {
@@ -93,7 +92,7 @@ namespace WebUI.Controllers
         }
 
         // POST api/<controller>
-        [HttpPost]
+        [HttpPost, Authorize]
         [Route("")]
         public IHttpActionResult Post([FromBody]CandidateDTO newCandidate)
         {
@@ -101,12 +100,13 @@ namespace WebUI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var addedCandidate = service.Add(newCandidate, authContainer.Get(this.ActionContext.Request.Headers.Authorization.Parameter).Item1.Id);
+            var id = PayloadDecoder.TryGetId(ActionContext.Request.Headers.Authorization.Parameter);
+            var addedCandidate = service.Add(newCandidate, id);
             return Json(addedCandidate, BOT_SERIALIZER_SETTINGS);
         }
 
         // PUT api/<controller>/5
-        [HttpPut]
+        [HttpPut, Authorize]
         [Route("{id}")]
         public IHttpActionResult Put(int id, [FromBody]CandidateDTO changedCandidate)
         {
@@ -114,12 +114,13 @@ namespace WebUI.Controllers
             {
                 return BadRequest(ModelState);
             }
-            var updatedCandidate = service.Update(changedCandidate, authContainer.Get(this.ActionContext.Request.Headers.Authorization.Parameter).Item1.Id);
+            int userId = PayloadDecoder.TryGetId(ActionContext.Request.Headers.Authorization.Parameter);
+            var updatedCandidate = service.Update(changedCandidate, userId);
             return Json(updatedCandidate, BOT_SERIALIZER_SETTINGS);
         }
 
         // DELETE api/<controller>/5
-        [HttpDelete]
+        [HttpDelete, Authorize]
         [Route("{id:int}")]
         public IHttpActionResult Delete(int id)
         {
@@ -128,9 +129,13 @@ namespace WebUI.Controllers
                 service.Delete(id);
                 return Ok();
             }
-            catch (EntityNotFoundException e)
+            catch (EntityNotFoundException)
             {
-                return BadRequest(e.Message);
+                return NotFound();
+            }
+            catch (Exception e)
+            {
+                return InternalServerError(e);
             }
         }
 
