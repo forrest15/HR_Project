@@ -1,6 +1,4 @@
-﻿using DAL.Infrastructure;
-using Domain.Entities;
-using System;
+﻿using System;
 using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;

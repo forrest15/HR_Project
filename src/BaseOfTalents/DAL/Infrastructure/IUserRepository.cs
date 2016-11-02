@@ -1,9 +1,5 @@
-﻿using Domain.Entities;
+﻿using System;
 using System.Threading.Tasks;
-﻿using Domain.Entities;
-using System;
-using System.Threading.Tasks;
-﻿using System.Threading.Tasks;
 using Domain.Entities;
 
 namespace DAL.Infrastructure

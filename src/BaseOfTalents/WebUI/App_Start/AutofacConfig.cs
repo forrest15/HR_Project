@@ -13,9 +13,9 @@ using Domain.Entities.Enum;
 using Domain.Entities.Enum.Setup;
 using Entities.Enum;
 using Mailer;
-using WebUI.Infrastructure.Auth;
+using WebUI.Auth.Infrastructure;
+using WebUI.Auth.Services;
 using WebUI.Services;
-using WebUI.Services.Auth;
 
 namespace WebUI.App_Start
 {
@@ -183,10 +183,6 @@ namespace WebUI.App_Start
             builder.RegisterGeneric(typeof(BaseRepository<>))
                 .As(typeof(IRepository<>))
                 .InstancePerDependency();
-
-            builder.RegisterType<TokenContainer>()
-                .As<IAuthContainer<string>>()
-                .SingleInstance();
 
             builder.RegisterType<UserAccountService>()
                 .As<IAccountService>()

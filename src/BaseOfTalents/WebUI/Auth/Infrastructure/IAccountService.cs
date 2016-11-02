@@ -8,6 +8,8 @@ namespace WebUI.Auth.Infrastructure
     /// </summary>
     public interface IAccountService
     {
+        UserDTO Register(UserDTO newUser, int mailId);
+
         /// <summary>
         /// Performs a logout - the action opposite to login
         /// </summary>

@@ -8,8 +8,8 @@ using Microsoft.Owin.Security.OAuth;
 using Owin;
 using WebUI.App_Start;
 using WebUI.Auth;
+using WebUI.Auth.Infrastructure;
 using WebUI.Extensions;
-using WebUI.Infrastructure.Auth;
 
 [assembly: OwinStartup(typeof(WebUI.ApiStartup))]
 namespace WebUI

@@ -1,9 +1,15 @@
 ﻿using System;
+using System.Data.Entity.Core;
 using System.Threading.Tasks;
 using DAL.DTO;
 using DAL.Services;
+using Domain.Entities;
+using Mailer;
 using WebUI.Auth.Infrastructure;
+using WebUI.Extensions;
+using WebUI.Globals;
 using WebUI.Globals.Validators;
+using WebUI.Services;
 
 namespace WebUI.Auth.Services
 {
@@ -14,11 +20,33 @@ namespace WebUI.Auth.Services
     {
         UserService _userService;
         RoleService _roleService;
+        BaseService<MailContent, MailDTO> _mailService;
+        TemplateService _templateService;
 
-        public UserAccountService(UserService userService, RoleService roleService)
+        public UserAccountService(UserService userService, RoleService roleService, TemplateService templateService,
+            BaseService<MailContent, MailDTO> mailService)
         {
             _userService = userService;
             _roleService = roleService;
+            _mailService = mailService;
+            _templateService = templateService;
+        }
+
+        public UserDTO Register(UserDTO newUser, int mailId)
+        {
+            var mailContent = _mailService.Get(mailId);
+            var template = _templateService.GetTemplate();
+
+            newUser.GeneratePassword();
+            var addedUser = _userService.Add(newUser);
+
+            var textAfterReplacing = MailBodyContentReplacer.Replace(mailContent.Body, addedUser.Login, addedUser.Password);
+            var mail = MailTemplateGenerator.Generate(template, mailContent.Invitation, textAfterReplacing, mailContent.Farewell, mailContent.Subject,
+                SettingsContext.Instance.GetImageUrl(), SettingsContext.Instance.GetOuterUrl());
+
+            MailAgent.Send(addedUser.Email, mail.Subject, mail.Template);
+
+            return addedUser;
         }
 
         /// <summary>
@@ -122,6 +150,41 @@ namespace WebUI.Auth.Services
             {
                 return false;
             }
+        }
+
+
+        /// <summary>
+        /// Recovering account by email or login
+        /// </summary>
+        /// <param name="loginOrEmail">string contains user's login or email</param>
+        public void RecoverAccount(string loginOrEmail)
+        {
+            if (String.IsNullOrEmpty(loginOrEmail))
+            {
+                throw new ArgumentException("Login and email can not be empty!");
+            }
+
+            var _validator = new EmailStringValidator();
+            UserDTO _user = _userService.Get((usr) => _validator.IsEmail(loginOrEmail) ?
+                                                              usr.Email == loginOrEmail :
+                                                              usr.Login == loginOrEmail);
+
+            if (_user == null)
+            {
+                throw new ObjectNotFoundException("User with such login or email not found!");
+            }
+
+            PasswordGenerator.GeneratePassword(_user);
+            _userService.Update(_user);
+
+            var template = _templateService.GetTemplate();
+            var mail = MailTemplateGenerator.Generate(template,
+            "Hello! Your password was changed.",
+            $"Your login is <b>{_user.Login}</b><br> Your new password is <b>{_user.Password}</b>",
+            "Wish you a nice day!", "Password recovery",
+            SettingsContext.Instance.GetImageUrl(), SettingsContext.Instance.GetOuterUrl());
+
+            MailAgent.Send(_user.Email, mail.Subject, mail.Template);
         }
     }
 }

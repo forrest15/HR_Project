@@ -139,7 +139,7 @@ namespace WebUI.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet, Authorize]
         [Route("duplicates")]
         public IHttpActionResult Get([FromUri]CandidateDTO patternCandidate)
         {
