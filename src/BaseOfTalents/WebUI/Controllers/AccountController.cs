@@ -28,7 +28,7 @@ namespace WebUI.Controllers
         }
 
         // POST api/<controller>
-        [HttpPost, Authorize]
+        [HttpPost]
         [Route("invite")]
         public IHttpActionResult Invite([FromBody]RegistrationModel newUser)
         {
@@ -45,7 +45,7 @@ namespace WebUI.Controllers
         /// Deletes session.
         /// </summary>
         /// <returns>Success or unsuccess</returns>
-        [HttpPost, Authorize]
+        [HttpPost]
         [Route("logout")]
         public IHttpActionResult Logout()
         {
@@ -65,7 +65,7 @@ namespace WebUI.Controllers
         /// <summary>
         /// Api for changing user password
         /// </summary>
-        [HttpPost, Authorize]
+        [HttpPost]
         [Route("password")]
         public IHttpActionResult ChangePassword([FromBody]ChangePasswordModel model)
         {

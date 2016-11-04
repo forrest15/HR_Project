@@ -37,10 +37,11 @@ namespace WebUI.Auth.Services
             var mailContent = _mailService.Get(mailId);
             var template = _templateService.GetTemplate();
 
-            newUser.GeneratePassword();
+            string pwd = PasswordGenerator.GeneratePassword();
+            newUser.Password = (Password)pwd;
             var addedUser = _userService.Add(newUser);
 
-            var textAfterReplacing = MailBodyContentReplacer.Replace(mailContent.Body, addedUser.Login, addedUser.Password);
+            var textAfterReplacing = MailBodyContentReplacer.Replace(mailContent.Body, addedUser.Login, pwd);
             var mail = MailTemplateGenerator.Generate(template, mailContent.Invitation, textAfterReplacing, mailContent.Farewell, mailContent.Subject,
                 SettingsContext.Instance.GetImageUrl(), SettingsContext.Instance.GetOuterUrl());
 
@@ -84,7 +85,7 @@ namespace WebUI.Auth.Services
             {
                 throw new ArgumentException(result.Message);
             }
-            user.Password = newPassword;
+            user.Password = (Password)newPassword;
             _userService.Update(user);
         }
 
@@ -98,7 +99,7 @@ namespace WebUI.Auth.Services
         public UserDTO Authentificate(string login, string password)
         {
             var user = _userService.Get(login);
-            if (user == null && user.Password == password)
+            if (user == null && user.Password.Equals(password))
             {
                 throw new ArgumentException("Wrong login or password");
                 //TODO: Extract message to external source
@@ -130,7 +131,7 @@ namespace WebUI.Auth.Services
         public async Task<UserDTO> AuthentificateAsync(string login, string password)
         {
             var user = await _userService.GetAsync(login);
-            if (user == null && user.Password == password)
+            if (user == null && user.Password.Equals(password))
             {
                 throw new ArgumentException("Wrong login or password");
                 //TODO: Extract message to external source
@@ -174,13 +175,14 @@ namespace WebUI.Auth.Services
                 throw new ObjectNotFoundException("User with such login or email not found!");
             }
 
-            PasswordGenerator.GeneratePassword(_user);
+            string pwd = PasswordGenerator.GeneratePassword();
+            _user.Password = (Password)pwd;
             _userService.Update(_user);
 
             var template = _templateService.GetTemplate();
             var mail = MailTemplateGenerator.Generate(template,
             "Hello! Your password was changed.",
-            $"Your login is <b>{_user.Login}</b><br> Your new password is <b>{_user.Password}</b>",
+            $"Your login is <b>{_user.Login}</b><br> Your new password is <b>{pwd}</b>",
             "Wish you a nice day!", "Password recovery",
             SettingsContext.Instance.GetImageUrl(), SettingsContext.Instance.GetOuterUrl());
 

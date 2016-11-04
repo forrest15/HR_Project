@@ -25,7 +25,7 @@ namespace DAL.Repositories
         /// <returns>A user that matches applied login, if there is no such user returns null</returns>
         public User Get(string login)
         {
-            return dbSet.FirstOrDefault(user =>
+            return dbSet.Include(user => user.Password).FirstOrDefault(user =>
                  user.Login == login);
         }
         /// <summary>
@@ -35,7 +35,7 @@ namespace DAL.Repositories
         /// <returns>A user that matches applied login, if there is no such user returns null</returns>
         public async Task<User> GetAsync(string login)
         {
-            return await dbSet.FirstOrDefaultAsync(user =>
+            return await dbSet.Include(user => user.Password).FirstOrDefaultAsync(user =>
                  user.Login == login);
         }
     }

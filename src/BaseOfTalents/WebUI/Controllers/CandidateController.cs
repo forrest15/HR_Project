@@ -24,14 +24,14 @@ namespace WebUI.Controllers
             this.service = service;
         }
 
-        [HttpGet, Authorize]
+        [HttpGet]
         public IHttpActionResult Get()
         {
             return this.Get(new CandidateSearchModel());
         }
 
         // GET api/<controller>
-        [HttpPost, Authorize]
+        [HttpPost]
         [Route("search")]
         public IHttpActionResult Get([FromBody]CandidateSearchModel searchParameters)
         {
@@ -78,7 +78,7 @@ namespace WebUI.Controllers
         }
 
         // GET api/<controller>/5
-        [HttpGet, Authorize]
+        [HttpGet]
         [Route("{id:int}")]
         public IHttpActionResult Get(int id)
         {
@@ -92,7 +92,7 @@ namespace WebUI.Controllers
         }
 
         // POST api/<controller>
-        [HttpPost, Authorize]
+        [HttpPost]
         [Route("")]
         public IHttpActionResult Post([FromBody]CandidateDTO newCandidate)
         {
@@ -106,7 +106,7 @@ namespace WebUI.Controllers
         }
 
         // PUT api/<controller>/5
-        [HttpPut, Authorize]
+        [HttpPut]
         [Route("{id}")]
         public IHttpActionResult Put(int id, [FromBody]CandidateDTO changedCandidate)
         {
@@ -120,7 +120,7 @@ namespace WebUI.Controllers
         }
 
         // DELETE api/<controller>/5
-        [HttpDelete, Authorize]
+        [HttpDelete]
         [Route("{id:int}")]
         public IHttpActionResult Delete(int id)
         {
@@ -139,7 +139,7 @@ namespace WebUI.Controllers
             }
         }
 
-        [HttpGet, Authorize]
+        [HttpGet]
         [Route("duplicates")]
         public IHttpActionResult Get([FromUri]CandidateDTO patternCandidate)
         {

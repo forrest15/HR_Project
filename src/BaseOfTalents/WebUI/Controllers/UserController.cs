@@ -37,7 +37,7 @@ namespace WebUI.Controllers
         /// </summary>
         /// <param name="identity">the parameter for identifiing user</param>
         /// <returns>Full user info</returns>
-        [HttpGet, Authorize]
+        [HttpGet]
         [Route("")]
         public IHttpActionResult GetUser()
         {
